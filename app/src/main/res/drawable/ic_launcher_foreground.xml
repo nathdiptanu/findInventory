@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Official DocuFind D + keyhole — centred in adaptive-icon 66dp safe zone -->
+    <group
+        android:translateX="54"
+        android:translateY="54"
+        android:scaleX="1.02"
+        android:scaleY="0.98">
+        <!-- D body with keyhole cutout -->
+        <path
+            android:fillColor="#1265E1"
+            android:fillType="evenOdd"
+            android:pathData="M-18,-30 L-18,30 L-2,30 C11,30 21,20 21,0 C21,-20 11,-30 -2,-30 Z
+                M-5.5,0 a4.2,4.2 0,1 0,-0.01,0
+                M-7,5.8 L-4,5.8 L-4,15.2 L-7,15.2 Z" />
+        <!-- Top-left sky highlight -->
+        <path
+            android:fillColor="#4FC3F7"
+            android:fillAlpha="0.55"
+            android:pathData="M-18,-30 L-18,-8 L-2,-8 C7,-8 13,-2 13,0 C13,-13 5,-21 -2,-21 L-18,-21 Z" />
+        <!-- Bottom depth shadow -->
+        <path
+            android:fillColor="#0D47A1"
+            android:fillAlpha="0.32"
+            android:pathData="M-2,30 C11,30 21,20 21,0 C21,13 11,23 -2,23 L-2,30 Z" />
+    </group>
+</vector>
