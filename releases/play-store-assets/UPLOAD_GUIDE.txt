@@ -1,0 +1,28 @@
+DocuFind Play Store Asset Pack
+
+Upload these files in Play Console > Store listing > Graphics.
+
+App icon:
+- app-icon-512.png
+
+Feature graphic:
+- feature-graphic-1024x500.png
+
+Phone screenshots:
+- phone-screenshots/01-onboarding.png
+- phone-screenshots/02-home-categories.png
+- phone-screenshots/03-secure-vault.png
+- phone-screenshots/04-add-record.png
+- phone-screenshots/05-file-preview.png
+- phone-screenshots/06-reminders.png
+- phone-screenshots/07-family-pets.png
+- phone-screenshots/08-privacy-backup.png
+
+Tablet screenshots:
+- tablet-screenshots/*.png
+
+Chromebook screenshots:
+- chromebook-screenshots/*.png
+
+Android XR screenshots:
+- Skip for now unless DocuFind is explicitly distributed to Android XR devices.

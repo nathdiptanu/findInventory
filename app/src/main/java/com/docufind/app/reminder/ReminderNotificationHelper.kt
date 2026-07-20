@@ -32,6 +32,7 @@ class ReminderNotificationHelper @Inject constructor(
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
         manager.deleteNotificationChannel(LEGACY_CHANNEL_ID)
         manager.deleteNotificationChannel(LEGACY_CHANNEL_V2_ID)
+        manager.deleteNotificationChannel(LEGACY_CHANNEL_V3_ID)
         val soundUri = Uri.parse(
             "android.resource://${context.packageName}/${R.raw.docufind_notify}"
         )
@@ -56,10 +57,11 @@ class ReminderNotificationHelper @Inject constructor(
     fun showReminderNotification(reminder: Reminder) {
         if (!canPostNotifications()) return
         ensureChannel()
+        val genericBody = context.getString(R.string.reminder_notification_body)
         val notification = buildNotification(
-            notificationId = reminder.id.hashCode(),
+            notificationId = ReminderTriggerCalculator.stableAlarmRequestCode(reminder.id),
             title = context.getString(R.string.reminder_notification_title),
-            body = reminder.title,
+            body = genericBody,
             importance = ReminderImportance.fromStored(reminder.importance),
             reminderId = reminder.id,
             linkedRecordId = reminder.linkedRecordId,
@@ -67,7 +69,7 @@ class ReminderNotificationHelper @Inject constructor(
             linkedPetRecordId = reminder.linkedPetRecordId,
             includeActions = true
         )
-        notifySafely(reminder.id.hashCode(), notification)
+        notifySafely(ReminderTriggerCalculator.stableAlarmRequestCode(reminder.id), notification)
     }
 
     fun showTestNotification() {
@@ -88,7 +90,9 @@ class ReminderNotificationHelper @Inject constructor(
     }
 
     fun cancelNotification(reminderId: String) {
-        NotificationManagerCompat.from(context).cancel(reminderId.hashCode())
+        NotificationManagerCompat.from(context).cancel(
+            ReminderTriggerCalculator.stableAlarmRequestCode(reminderId)
+        )
     }
 
     fun canPostNotifications(): Boolean {
@@ -133,6 +137,11 @@ class ReminderNotificationHelper @Inject constructor(
             tapIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+        val publicNotification = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_notification_small)
+            .setContentTitle(context.getString(R.string.reminder_notification_title))
+            .setContentText(context.getString(R.string.reminder_notification_body))
+            .build()
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification_small)
             .setColor(ContextCompat.getColor(context, R.color.docufind_notification_accent))
@@ -144,6 +153,8 @@ class ReminderNotificationHelper @Inject constructor(
             .setAutoCancel(true)
             .setContentIntent(pendingTap)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
+            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+            .setPublicVersion(publicNotification)
         if (includeActions && reminderId != null) {
             builder.addAction(
                 R.drawable.ic_notification_small,
@@ -157,8 +168,8 @@ class ReminderNotificationHelper @Inject constructor(
             )
             builder.addAction(
                 R.drawable.ic_notification_small,
-                context.getString(R.string.reminder_action_dismiss),
-                actionPendingIntent(ReminderActionReceiver.ACTION_DISMISS, reminderId, notificationId + 2)
+                context.getString(R.string.reminder_action_snooze),
+                actionPendingIntent(ReminderActionReceiver.ACTION_SNOOZE, reminderId, notificationId + 2)
             )
         }
         return builder.build()
@@ -186,7 +197,8 @@ class ReminderNotificationHelper @Inject constructor(
     }
 
     private fun loadBrandIconBitmap(): Bitmap? {
-        val drawable = ContextCompat.getDrawable(context, R.drawable.ic_docufind_mark) ?: return null
+        // Same official mark as Home / launcher / PDF export.
+        val drawable = ContextCompat.getDrawable(context, R.drawable.ic_docufind_mark_raster) ?: return null
         val size = (context.resources.displayMetrics.density * 48).toInt().coerceAtLeast(1)
         return Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888).also { bitmap ->
             val canvas = Canvas(bitmap)
@@ -196,9 +208,11 @@ class ReminderNotificationHelper @Inject constructor(
     }
 
     companion object {
-        const val CHANNEL_ID = "docufind_reminders_v3"
+        /** Bump channel id when sound/identity changes — Android freezes channel sound after first create. */
+        const val CHANNEL_ID = "docufind_reminders_v4"
         private const val LEGACY_CHANNEL_ID = "docufind_reminders"
         private const val LEGACY_CHANNEL_V2_ID = "docufind_reminders_v2"
+        private const val LEGACY_CHANNEL_V3_ID = "docufind_reminders_v3"
         const val TEST_NOTIFICATION_ID = 900_001
     }
 }

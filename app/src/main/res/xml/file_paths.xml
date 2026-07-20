@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <cache-path name="camera_cache" path="camera/" />
+    <cache-path name="export_cache" path="export/" />
+    <cache-path name="ocr_cache" path="ocr/" />
+    <cache-path name="add_preview" path="add_preview/" />
+    <cache-path name="support_attach" path="support_attach/" />
+    <cache-path name="profile_photos" path="profile_photos/" />
+</paths>

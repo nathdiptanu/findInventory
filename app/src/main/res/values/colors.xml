@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="brand_primary_blue">#1265E1</color>
+    <color name="brand_accent_blue">#2D9CFF</color>
+    <color name="brand_light_blue">#67C3FF</color>
+    <color name="brand_soft_background">#E8F2FF</color>
+    <color name="brand_deep_navy">#0A1A33</color>
+    <color name="brand_neutral_gray">#6B7280</color>
+
+    <color name="splash_background">#0A1A33</color>
+    <color name="docufind_notification_accent">#1265E1</color>
+    <color name="ic_launcher_background">#FFFFFF</color>
+</resources>

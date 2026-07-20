@@ -11,8 +11,12 @@ import androidx.compose.ui.unit.dp
 import com.docufind.app.R
 
 /**
- * Official DocuFind brand mark — raster from approved logo reference.
- * Used consistently across splash, onboarding, settings, and in-app branding.
+ * Single brand source for DocuFind.
+ *
+ * - [DocuFindBrandMark]: official blue “D + keyhole” (transparent) — Home, splash, headers.
+ * - [DocuFindAppIcon]: full Play-style tile (white rounded square + mark) — About / marketing.
+ *
+ * Never stretch ([ContentScale.Fit]). Tagline is never part of the icon artwork.
  */
 @Composable
 fun DocuFindBrandMark(
@@ -21,8 +25,8 @@ fun DocuFindBrandMark(
     showShadow: Boolean = true
 ) {
     Image(
-        painter = painterResource(R.drawable.ic_docufind_mark),
-        contentDescription = null,
+        painter = painterResource(R.drawable.ic_docufind_mark_raster),
+        contentDescription = "DocuFind",
         modifier = modifier.size(size),
         contentScale = ContentScale.Fit
     )
@@ -34,4 +38,18 @@ fun DocuFindLogo(
     size: Dp = 96.dp
 ) {
     DocuFindBrandMark(modifier = modifier, size = size, showShadow = false)
+}
+
+/** Full app tile matching Play Store / home-screen icon look (no tagline). */
+@Composable
+fun DocuFindAppIcon(
+    modifier: Modifier = Modifier,
+    size: Dp = 96.dp
+) {
+    Image(
+        painter = painterResource(R.drawable.ic_docufind_app_icon),
+        contentDescription = "DocuFind",
+        modifier = modifier.size(size),
+        contentScale = ContentScale.Fit
+    )
 }
