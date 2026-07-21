@@ -25,6 +25,7 @@
             <action android:name="android.intent.action.SEND" />
             <data android:mimeType="*/*" />
         </intent>
+        <package android:name="com.google.android.apps.docs" />
     </queries>
 
 
@@ -60,7 +61,7 @@
 
             android:theme="@style/Theme.DocuFind"
 
-            android:windowSoftInputMode="adjustNothing">
+            android:windowSoftInputMode="adjustResize">
 
             <intent-filter>
 

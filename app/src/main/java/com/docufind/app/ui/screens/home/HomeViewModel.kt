@@ -79,4 +79,9 @@ class HomeViewModel @Inject constructor(
             it.copy(tagline = tagline, taglineAccentColor = accent)
         }
     }
+
+    /** Pull-to-refresh: refresh greeting; Room flows already stream live data. */
+    fun refreshHome() {
+        refreshGreeting()
+    }
 }

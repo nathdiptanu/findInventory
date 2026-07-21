@@ -13,10 +13,8 @@ import com.docufind.app.R
 /**
  * Single brand source for DocuFind.
  *
- * - [DocuFindBrandMark]: official blue “D + keyhole” (transparent) — Home, splash, headers.
- * - [DocuFindAppIcon]: full Play-style tile (white rounded square + mark) — About / marketing.
- *
- * Never stretch ([ContentScale.Fit]). Tagline is never part of the icon artwork.
+ * - [DocuFindBrandMark] / [DocuFindLogo]: transparent D + keyhole (matches launcher mark)
+ * - [DocuFindAppIcon]: full white-tile Play icon — About / marketing only
  */
 @Composable
 fun DocuFindBrandMark(
@@ -25,7 +23,7 @@ fun DocuFindBrandMark(
     showShadow: Boolean = true
 ) {
     Image(
-        painter = painterResource(R.drawable.ic_docufind_mark_raster),
+        painter = painterResource(R.drawable.ic_docufind_mark_clean),
         contentDescription = "DocuFind",
         modifier = modifier.size(size),
         contentScale = ContentScale.Fit

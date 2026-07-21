@@ -151,13 +151,9 @@ fun ModuleListScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
-                title = { Text(moduleTitle, fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
-                    }
-                },
+            com.docufind.app.ui.components.DocuFindTopBar(
+                title = moduleTitle,
+                onBack = onBack,
                 actions = {
                     IconButton(
                         onClick = viewModel::requestExportCategoryPdf,

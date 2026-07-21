@@ -1,10 +1,14 @@
 package com.docufind.app.ui.screens.backup
 
+import android.accounts.AccountManager
 import android.content.Context
+import android.content.Intent
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.docufind.app.R
+import com.docufind.app.cloud.GoogleAccountSession
+import com.docufind.app.cloud.GoogleDriveBackupClient
 import com.docufind.app.domain.model.backup.BackupStatus
 import com.docufind.app.domain.repository.BackupRepository
 import com.docufind.app.security.auth.AuthGate
@@ -27,6 +31,7 @@ data class BackupUiState(
     val restorePassword: String = "",
     val isCreating: Boolean = false,
     val isRestoring: Boolean = false,
+    val isDriveBusy: Boolean = false,
     val errorMessage: String? = null,
     val successMessage: String? = null,
     val pendingBackupBytes: ByteArray? = null,
@@ -34,14 +39,18 @@ data class BackupUiState(
     val showRestoreConfirm: Boolean = false,
     val showRestoreComplete: Boolean = false,
     val pendingPreview: BackupPreview? = null,
-    val backupStatus: BackupStatus = BackupStatus.NEVER
+    val backupStatus: BackupStatus = BackupStatus.NEVER,
+    val googleEmail: String? = null,
+    val hasDriveBackup: Boolean = false
 )
 
 @HiltViewModel
 class BackupViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val backupRepository: BackupRepository,
-    private val authGate: AuthGate
+    private val authGate: AuthGate,
+    private val googleAccountSession: GoogleAccountSession,
+    private val googleDriveBackupClient: GoogleDriveBackupClient
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BackupUiState())
@@ -50,10 +59,113 @@ class BackupViewModel @Inject constructor(
     private var pendingRestoreBytes: ByteArray? = null
 
     init {
+        refreshGoogleAccount()
         viewModelScope.launch {
             backupRepository.observeStorageInfo().collect { info ->
                 _uiState.update { it.copy(backupStatus = info.backupStatus) }
             }
+        }
+    }
+
+    fun refreshGoogleAccount() {
+        val account = googleAccountSession.getSignedInAccount()
+        _uiState.update {
+            it.copy(
+                googleEmail = account?.email,
+                hasDriveBackup = account != null && it.backupStatus != BackupStatus.NEVER
+            )
+        }
+    }
+
+    fun getGoogleSignInIntent() = googleAccountSession.getAccountPickerIntent()
+
+    fun onGoogleSignInResult(data: Intent?) {
+        val email = data?.getStringExtra(AccountManager.KEY_ACCOUNT_NAME)
+        if (email.isNullOrBlank()) {
+            _uiState.update {
+                it.copy(errorMessage = context.getString(R.string.backup_google_sign_in_failed))
+            }
+            return
+        }
+        googleAccountSession.onAccountPicked(email)
+        refreshGoogleAccount()
+        _uiState.update {
+            it.copy(successMessage = context.getString(R.string.backup_google_signed_in))
+        }
+    }
+
+    fun switchGoogleAccount(onIntent: (Intent) -> Unit) {
+        onIntent(googleAccountSession.switchAccountIntent())
+        refreshGoogleAccount()
+    }
+
+    fun signOutGoogle() {
+        googleAccountSession.clearAccount()
+        refreshGoogleAccount()
+        _uiState.update {
+            it.copy(successMessage = context.getString(R.string.backup_google_signed_out))
+        }
+    }
+
+    fun uploadEncryptedBackupToDrive(onShareIntent: (Intent) -> Unit) {
+        val state = _uiState.value
+        when {
+            state.googleEmail.isNullOrBlank() ->
+                _uiState.update { it.copy(errorMessage = context.getString(R.string.backup_google_sign_in_required)) }
+            state.backupPassword.length < 8 ->
+                _uiState.update { it.copy(errorMessage = context.getString(R.string.backup_password_min)) }
+            state.backupPassword != state.confirmPassword ->
+                _uiState.update { it.copy(errorMessage = context.getString(R.string.backup_password_mismatch)) }
+            else -> {
+                viewModelScope.launch {
+                    _uiState.update { it.copy(isDriveBusy = true, errorMessage = null) }
+                    backupRepository.createBackup(state.backupPassword.toCharArray())
+                        .onSuccess { result ->
+                            googleDriveBackupClient.createDriveShareIntent(result.encryptedBytes)
+                                .onSuccess { intent ->
+                                    backupRepository.recordBackupExport(
+                                        fileName = GoogleDriveBackupClient.BACKUP_FILE_NAME,
+                                        localPath = "drive:share:${state.googleEmail}",
+                                        fileSize = result.encryptedBytes.size.toLong(),
+                                        preview = result.preview
+                                    )
+                                    _uiState.update {
+                                        it.copy(
+                                            isDriveBusy = false,
+                                            hasDriveBackup = true,
+                                            backupPassword = "",
+                                            confirmPassword = "",
+                                            successMessage = context.getString(R.string.backup_drive_upload_success)
+                                        )
+                                    }
+                                    onShareIntent(intent)
+                                }
+                                .onFailure {
+                                    _uiState.update {
+                                        it.copy(
+                                            isDriveBusy = false,
+                                            errorMessage = context.getString(R.string.backup_drive_upload_failed)
+                                        )
+                                    }
+                                }
+                        }
+                        .onFailure {
+                            _uiState.update {
+                                it.copy(
+                                    isDriveBusy = false,
+                                    errorMessage = context.getString(R.string.backup_create_failed)
+                                )
+                            }
+                        }
+                }
+            }
+        }
+    }
+
+    fun downloadEncryptedBackupFromDrive() {
+        // Restore from Drive uses the same SAF file picker (user opens .dfbackup from Drive).
+        _uiState.update {
+            it.copy(successMessage = context.getString(R.string.backup_drive_download_hint))
         }
     }
 

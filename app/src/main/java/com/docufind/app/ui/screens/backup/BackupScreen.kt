@@ -5,8 +5,10 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -92,6 +94,12 @@ fun BackupScreen(
         }
     }
 
+    val googleSignInLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        viewModel.onGoogleSignInResult(result.data)
+    }
+
     val openDocumentLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
@@ -145,7 +153,15 @@ fun BackupScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.settings_backup), fontWeight = FontWeight.Bold) },
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        com.docufind.app.ui.components.DocuFindLogo(size = 28.dp)
+                        Text(stringResource(R.string.settings_backup), fontWeight = FontWeight.Bold)
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
@@ -159,12 +175,78 @@ fun BackupScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .padding(16.dp)
+                .imePadding()
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             if (uiState.backupStatus == BackupStatus.NEVER) {
                 DocuFindCard(modifier = Modifier.fillMaxWidth()) {
                     DocuFindEmptyState(message = stringResource(R.string.backup_empty))
+                }
+            }
+
+            DocuFindCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        text = stringResource(R.string.backup_google_drive_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = stringResource(R.string.backup_google_drive_desc),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (uiState.googleEmail.isNullOrBlank()) {
+                        DocuFindPrimaryButton(
+                            text = stringResource(R.string.backup_google_sign_in),
+                            onClick = { googleSignInLauncher.launch(viewModel.getGoogleSignInIntent()) },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    } else {
+                        Text(
+                            text = stringResource(R.string.backup_google_signed_as, uiState.googleEmail.orEmpty()),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        if (uiState.hasDriveBackup) {
+                            Text(
+                                text = stringResource(R.string.backup_drive_present),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        if (uiState.isDriveBusy) {
+                            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                        } else {
+                            DocuFindPrimaryButton(
+                                text = stringResource(R.string.backup_drive_upload),
+                                onClick = {
+                                    viewModel.uploadEncryptedBackupToDrive { intent ->
+                                        context.startActivity(intent)
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            DocuFindPrimaryButton(
+                                text = stringResource(R.string.backup_drive_download),
+                                onClick = {
+                                    viewModel.downloadEncryptedBackupFromDrive()
+                                    openDocumentLauncher.launch(arrayOf("*/*"))
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            TextButton(onClick = {
+                                viewModel.switchGoogleAccount { intent ->
+                                    googleSignInLauncher.launch(intent)
+                                }
+                            }) {
+                                Text(stringResource(R.string.backup_google_switch_account))
+                            }
+                            TextButton(onClick = viewModel::signOutGoogle) {
+                                Text(stringResource(R.string.backup_google_sign_out))
+                            }
+                        }
+                    }
                 }
             }
 

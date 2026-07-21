@@ -69,14 +69,8 @@ fun SettingsScreen(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        stringResource(R.string.nav_settings),
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.secondary
-                    )
-                }
+            com.docufind.app.ui.components.DocuFindTopBar(
+                title = stringResource(R.string.nav_settings)
             )
         }
     ) { padding ->

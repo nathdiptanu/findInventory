@@ -252,65 +252,27 @@ fun NewDocumentScreen(
     }
 
     if (uiState.showDuplicateDialog) {
-        AlertDialog(
-            onDismissRequest = viewModel::dismissDuplicateDialog,
-            title = { Text(stringResource(R.string.duplicate_record_title)) },
-            text = {
-                Text(
-                    stringResource(
-                        R.string.duplicate_record_message,
-                        uiState.duplicateTitles.joinToString("\n")
-                    )
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = viewModel::confirmSaveDespiteDuplicate) {
-                    Text(stringResource(R.string.duplicate_save_anyway))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = viewModel::dismissDuplicateDialog) {
-                    Text(stringResource(R.string.cancel))
-                }
-            }
+        com.docufind.app.ui.components.DocuFindConfirmScreen(
+            title = stringResource(R.string.duplicate_record_title),
+            message = stringResource(
+                R.string.duplicate_record_message,
+                uiState.duplicateTitles.joinToString("\n")
+            ),
+            confirmLabel = stringResource(R.string.duplicate_save_anyway),
+            onConfirm = viewModel::confirmSaveDespiteDuplicate,
+            onDismiss = viewModel::dismissDuplicateDialog
         )
     }
 
     if (uiState.showConfirmDialog) {
-        AlertDialog(
-            onDismissRequest = viewModel::dismissConfirmDialog,
-            title = { Text(stringResource(R.string.confirm_save_title)) },
-            text = {
-                Column {
-                    Text(stringResource(R.string.confirm_save_message))
-                    Text(
-                        text = stringResource(R.string.confirm_save_files_count, uiState.attachments.size),
-                        modifier = Modifier.padding(top = 8.dp),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    uiState.attachments.forEach { entry ->
-                        FilePreviewCard(
-                            fileName = entry.attachment.displayName,
-                            fileSizeLabel = AttachmentHelper.formatFileSize(entry.attachment.sizeBytes),
-                            previewPath = entry.attachment.localPreviewPath,
-                            mimeType = entry.attachment.mimeType,
-                            onRemove = {},
-                            showRemove = false,
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = viewModel::confirmSave) {
-                    Text(stringResource(R.string.confirm_save_button))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = viewModel::dismissConfirmDialog) {
-                    Text(stringResource(R.string.cancel))
-                }
-            }
+        com.docufind.app.ui.components.DocuFindConfirmScreen(
+            title = stringResource(R.string.confirm_save_title),
+            message = stringResource(R.string.confirm_save_message) +
+                "\n\n" +
+                stringResource(R.string.confirm_save_files_count, uiState.attachments.size),
+            confirmLabel = stringResource(R.string.confirm_save_button),
+            onConfirm = viewModel::confirmSave,
+            onDismiss = viewModel::dismissConfirmDialog
         )
     }
 
